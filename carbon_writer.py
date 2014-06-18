@@ -225,13 +225,24 @@ def carbon_write(v, data=None):
     if postfix is not None:
         metric_fields.append(postfix)
 
-    metric_fields.append(v.plugin)
+    #metric_fields.append(v.plugin)
     if v.plugin_instance:
-        metric_fields.append(sanitize_field(v.plugin_instance))
-
-    metric_fields.append(v.type)
+        # for example for cpu plugin (0 -> cpu0)
+        if v.plugin_instance.isdigit():
+            metric_fields.append('%s%s' % (v.plugin, v.plugin_instance))
+        else:
+            metric_fields.append(sanitize_field(v.plugin_instance))
+    else:
+        metric_fields.append(v.plugin)
+    
+    #if v.type != v.plugin:
+    #    metric_fields.append(v.type)
+    
     if v.type_instance:
         metric_fields.append(sanitize_field(v.type_instance))
+    
+    if v.type != v.plugin:
+        metric_fields.append(v.type)
 
     time = v.time
 
@@ -245,7 +256,8 @@ def carbon_write(v, data=None):
         ds_type = v_type[i][1]
 
         path_fields = metric_fields[:]
-        path_fields.append(ds_name)
+        if ds_name != 'value':
+            path_fields.append(ds_name)
 
         metric = '.'.join(path_fields)
 
